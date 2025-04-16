@@ -15,4 +15,7 @@ No terminal, navegue até o diretório do projeto e execute o comando abaixo par
 ```bash
 docker build -t sales-dashboard .
 
-# docker-ao-vivo
+
+## Construcao do banco de dados POSTGRESQL no Docker comando de uma linha apenas
+
+docker run --name postgres-container -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=aprendizado -p 5432:5432 -d postgres:15

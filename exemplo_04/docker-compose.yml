@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: analista
+      POSTGRES_PASSWORD: segredo
+      POSTGRES_DB: datawarehouse
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["executable", "arg"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+# api para acesso aos dados
+
+api:
+  build: ./api
+  container_name: dados_api
+  depends_on:
+    db:
+      condition: service_healthy
+  environment:
+    - DATABASE_URL=postgresql://analista:segredo@db:5432/datawarehouse
+  ports:
+    - "8000:8000"
+
+
+# dashboard para visualizacao
+
+  dashboard:
+    build: ./dashboard
+    container_name: dados-dashboard
+    depends-on:
+     - api
+    environment:
+    - API_URL=http://api:8000
+    ports:
+    - "8501:8501"
+        
+  volumes:
+  postgres_data:
