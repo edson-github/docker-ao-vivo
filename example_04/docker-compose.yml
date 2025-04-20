@@ -1,21 +1,19 @@
-# docker-compose.yml
 services:
   # Banco de dados
   db:
     image: postgres:14.8
     container_name: postgres-analytics
     environment:
-      - POSTGRES_USER=analist
-      - POSTGRES_PASSWORD=service_healthy_43@!
-      - POSTGRES_DB=datawarehouse
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Inicialização do banco com script SQL
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U analista -d datawarehouse"]
+      test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,20 +26,12 @@ services:
       db:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://analista:segredo@db:5432/datawarehouse
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
     ports:
       - "8000:8000"
-
-  # Dashboard para visualização
-  dashboard:
-    build: ./dashboard
-    container_name: dados-dashboard
-    depends_on:
-      - api
-    environment:
-      - API_URL=http://api:8000
-    ports:
-      - "8501:8501"
-
-volumes:
-  postgres_data:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/vendas"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
